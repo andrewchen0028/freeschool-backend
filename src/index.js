@@ -7,7 +7,7 @@ app.use(express.json());
 app.use(cors());
 
 const graph = {
-  "nodes": [{ id: uuidv4(), title: "root" }],
+  "nodes": [{ id: uuidv4(), title: "root", color: "#4285F4" }],
   "links": []
 };
 const resources = {};
@@ -23,7 +23,8 @@ app.get("/api/nodes/:id/resources", (request, response) => {
 app.post("/api/graph/nodes", (request, response) => {
   const newNode = {
     id: uuidv4(),
-    title: request.body.title
+    title: request.body.title,
+    color: "#4285F4"
   };
   if (graph.nodes.some((node) => node.title === newNode.title)) {
     response.status(400).end();
