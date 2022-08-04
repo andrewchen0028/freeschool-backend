@@ -13,8 +13,8 @@ let nodes = [
 ];
 
 let links = [
-  { id: uuidv4(), source: nodes[0].id, target: nodes[1].id },
-  { id: uuidv4(), source: nodes[1].id, target: nodes[2].id }
+  { id: uuidv4(), sourceId: nodes[0].id, targetId: nodes[1].id },
+  { id: uuidv4(), sourceId: nodes[1].id, targetId: nodes[2].id }
 ];
 
 let resources = [
@@ -24,61 +24,115 @@ let resources = [
 ];
 
 app.get("/graph", (_request, response) => {
-  response.json({ nodes: nodes, links: links }).status(200).end();
+  return response.json({ nodes: nodes, links: links }).status(200).end();
+
 });
 
-// TODO: Deprecate after separating node page.
 app.get("/nodes/:id/resources", (request, response) => {
-  response.json(resources.filter(
+  return response.json(resources.filter(
     (resource) => resource.nodeId === request.params.id
   )).status(200).end();
+
 });
 
-app.post("/graph/nodes", (request, response) => {
-  const newNode = {
+app.get("/nodes/:id/inlinks", (request, response) => {
+  return response.json(links.filter(
+    (link) => link.target === request.params.id
+  )).status(200).end();
+
+});
+
+app.get("/nodes/:id/outlinks", (request, response) => {
+  return response.json(links.filter(
+    (link) => link.sourceId === request.params.id
+  )).status(200).end();
+
+});
+
+app.post("/nodes", (request, response) => {
+  // Error if node already exists
+  if (nodes.some((node) => node.title === request.body.title)) {
+    return response.status(400).end();
+  }
+
+  const node = {
     id: uuidv4(),
     title: request.body.title,
     color: "#4285F4"
   };
-  if (nodes.some((node) => node.title === newNode.title)) {
-    response.status(400).end();
-  } else {
-    nodes = nodes.concat(newNode);
-    response.json(newNode).status(200).end();
-  }
-});
 
-app.post("/graph/links", (request, response) => {
-  const newLink = {
-    id: uuidv4(),
-    source: request.body.source,
-    target: request.body.target
-  };
-  if (links.some((link) => link === newLink)) {
-    response.status(400).end();
-  } else {
-    links = links.concat(newLink);
-    response.json(newLink).status(200).end();
-  }
+  nodes = nodes.concat(node);
+  return response.json(node).status(200).end();
+
 });
 
 app.post("/nodes/:id/resources", (request, response) => {
+  // Error if resource already exists
+  if (resources
+    .filter((resource) => resource.nodeId === request.params.id)
+    .some((resource) =>
+      resource.title === request.body.title
+      || resource.url === request.body.url
+    )) {
+    return response.status(400).end();
+  }
+
   const resource = {
     id: uuidv4(),
     nodeId: request.params.id,
     title: request.body.title,
     url: request.body.url
   };
+
   resources = resources.concat(resource)
-  response.json(resource).status(200).end();
+  return response.json(resource).status(200).end();
+
 });
 
-app.delete("/graph/nodes/:id", (request, response) => {
+app.post("/nodes/:id/inlinks", (request, response) => {
+  const targetId = request.params.id;
+  const sourceTitle = request.body.sourceTitle;
+  const sourceNode = nodes.find((node) => node.title === sourceTitle);
+
+  // Error if source node doesn't exist
+  if (!sourceNode) { return response.status(400).end(); }
+
+  // Error if link already exists
+  if (links.some((link) =>
+    link.sourceId === sourceNode.id && link.targetId === targetId
+  )) { return response.status(400).end(); }
+
+  const link = { id: uuidv4(), sourceId: sourceNode.id, targetId: targetId };
+  links = links.concat(link);
+  return response.json(link).status(200).end();
+
+});
+
+app.post("/nodes/:id/outlinks", (request, response) => {
+  const sourceId = request.params.id;
+  const targetTitle = request.body.targetTitle;
+  const targetNode = nodes.find((node) => node.title === targetTitle);
+
+  // Error if target node doesn't exist
+  if (!targetNode) { return response.status(400).end(); }
+
+  // Error if link already exists
+  if (links.some((link) =>
+    link.sourceId === sourceId && link.targetId === targetNode.id
+  )) { return response.status(400).end(); }
+
+  const link = { id: uuidv4(), sourceId: sourceId, targetId: targetNode.id };
+  links = links.concat(link);
+  return response.json(link).status(200).end();
+});
+
+app.delete("/nodes/:id", (request, response) => {
   const id = request.params.id;
   nodes = nodes.filter(node => node.id !== id);
-  links = links.filter(link => link.source !== id);
-  links = links.filter(link => link.target !== id);
-  response.status(204).end();
+  links = links
+    .filter(link => link.sourceId !== id)
+    .filter(link => link.targetId !== id);
+  return response.status(204).end();
 });
 
 const PORT = process.env.PORT || 3001;
