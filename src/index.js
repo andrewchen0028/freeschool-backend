@@ -24,12 +24,11 @@ let resources = [
 ];
 
 app.get("/graph", (_request, response) => {
-  response.json({ nodes: nodes, links: links }).status(200).end();
+  return response.json({ nodes: nodes, links: links }).status(200).end();
 });
 
-// TODO: Deprecate after separating node page.
 app.get("/nodes/:id/resources", (request, response) => {
-  response.json(resources.filter(
+  return response.json(resources.filter(
     (resource) => resource.nodeId === request.params.id
   )).status(200).end();
 });
@@ -40,12 +39,14 @@ app.post("/graph/nodes", (request, response) => {
     title: request.body.title,
     color: "#4285F4"
   };
+
   if (nodes.some((node) => node.title === newNode.title)) {
-    response.status(400).end();
-  } else {
-    nodes = nodes.concat(newNode);
-    response.json(newNode).status(200).end();
+    return response.status(400).end();
   }
+
+  nodes = nodes.concat(newNode);
+  return response.json(newNode).status(200).end();
+
 });
 
 app.post("/graph/links", (request, response) => {
@@ -54,12 +55,14 @@ app.post("/graph/links", (request, response) => {
     source: request.body.source,
     target: request.body.target
   };
+
   if (links.some((link) => link === newLink)) {
-    response.status(400).end();
-  } else {
-    links = links.concat(newLink);
-    response.json(newLink).status(200).end();
+    return response.status(400).end();
   }
+
+  links = links.concat(newLink);
+  return response.json(newLink).status(200).end();
+
 });
 
 app.post("/nodes/:id/resources", (request, response) => {
@@ -69,8 +72,10 @@ app.post("/nodes/:id/resources", (request, response) => {
     title: request.body.title,
     url: request.body.url
   };
+
   resources = resources.concat(resource)
-  response.json(resource).status(200).end();
+  return response.json(resource).status(200).end();
+
 });
 
 app.delete("/graph/nodes/:id", (request, response) => {
@@ -78,7 +83,7 @@ app.delete("/graph/nodes/:id", (request, response) => {
   nodes = nodes.filter(node => node.id !== id);
   links = links.filter(link => link.source !== id);
   links = links.filter(link => link.target !== id);
-  response.status(204).end();
+  return response.status(204).end();
 });
 
 const PORT = process.env.PORT || 3001;
