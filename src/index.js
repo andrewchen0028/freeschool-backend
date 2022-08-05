@@ -29,7 +29,7 @@ app.get("/graph", (_request, response) => {
 });
 
 app.get("/nodes/:id", (request, response) => {
-  return response.json(nodes.filter(
+  return response.json(nodes.find(
     (node) => node.id === request.params.id
   )).status(200).end();
 
