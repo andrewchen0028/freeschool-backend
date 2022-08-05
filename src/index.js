@@ -1,11 +1,12 @@
 const cors = require("cors");
-const { response } = require("express");
 const express = require("express");
 const { v4: uuidv4 } = require("uuid");
 
 const app = express();
 app.use(express.json());
 app.use(cors());
+
+// TODO #1: Flesh out resource schema and implement scores.
 
 let nodes = [
   { id: uuidv4(), title: "NSA", color: "#4285F4" },
@@ -32,7 +33,6 @@ app.get("/nodes/:id", (request, response) => {
   return response.json(nodes.find(
     (node) => node.id === request.params.id
   )).status(200).end();
-
 });
 
 app.get("/nodes/:id/resources", (request, response) => {
@@ -51,16 +51,6 @@ app.get("/nodes/:id/outlinks", (request, response) => {
   return response.json(links.filter(
     (link) => link.source === request.params.id
   )).status(200).end();
-})
-
-// TODO: Implement
-app.get("/nodes/:id/supernodes", (_request, response) => {
-  return response.json([]).status(200).end();
-})
-
-// TODO: Implement
-app.get("/nodes/:id/subnodes", (_request, response) => {
-  return response.json([]).status(200).end();
 })
 
 // app.post("/nodes", (request, response) => {
@@ -98,19 +88,19 @@ app.get("/nodes/:id/subnodes", (_request, response) => {
 
 // });
 
-app.post("/nodes/:id/resources", (request, response) => {
-  // TODO: Error if resource already exists
-  const resource = {
-    id: uuidv4(),
-    nodeId: request.params.id,
-    title: request.body.title,
-    url: request.body.url
-  };
+// app.post("/nodes/:id/resources", (request, response) => {
+//   // TODO: Error if resource already exists
+//   const resource = {
+//     id: uuidv4(),
+//     nodeId: request.params.id,
+//     title: request.body.title,
+//     url: request.body.url
+//   };
 
-  resources = resources.concat(resource);
-  return response.json(resource).status(200).end();
+//   resources = resources.concat(resource);
+//   return response.json(resource).status(200).end();
 
-});
+// });
 
 app.delete("/nodes/:id", (request, response) => {
   const id = request.params.id;
