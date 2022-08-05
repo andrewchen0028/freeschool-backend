@@ -6,33 +6,35 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// TODO #1: Flesh out resource schema and implement scores.
+let nodes = {
+  NSANode: { color: "#4285F4", comments: [] },
+  FBINode: { color: "#4285F4", comments: [] },
+  ATFNode: { color: "#4285F4", comments: [] },
+}
 
-let nodes = [
-  { id: uuidv4(), title: "NSA", color: "#4285F4" },
-  { id: uuidv4(), title: "FBI", color: "#4285F4" },
-  { id: uuidv4(), title: "CIA", color: "#4285F4" }
-];
-
+// TODO: Change to kv store.
 let links = [
-  { id: uuidv4(), source: nodes[0].id, target: nodes[1].id },
-  { id: uuidv4(), source: nodes[1].id, target: nodes[2].id }
+  { id: uuidv4(), source: "NSANode", target: "FBINode" },
+  { id: uuidv4(), source: "FBINode", target: "ATFNode" }
 ];
 
+// TODO #2: Change resources to title-keyed kv store.
 let resources = [
-  { id: uuidv4(), node: nodes[0].id, title: "NSA", url: "https://nsa.gov" },
-  { id: uuidv4(), node: nodes[1].id, title: "FBI", url: "https://fbi.gov" },
-  { id: uuidv4(), node: nodes[2].id, title: "CIA", url: "https://cia.gov" }
+  { id: uuidv4(), node: "NSANode", title: "NSA site", url: "https://nsa.gov" },
+  { id: uuidv4(), node: "FBINode", title: "FBI site", url: "https://fbi.gov" },
+  { id: uuidv4(), node: "ATFNode", title: "ATF site", url: "https://atf.gov" }
 ];
 
 app.get("/graph", (_request, response) => {
-  return response.json({ nodes: nodes, links: links }).status(200).end();
+  return response.json({
+    nodes: Object.entries(nodes).map(([id, { color }]) => ({ id, color })),
+    links: links
+  }).status(200).end();
 });
 
 app.get("/nodes/:id", (request, response) => {
-  return response.json(nodes.find(
-    (node) => node.id === request.params.id
-  )).status(200).end();
+  const id = request.params.id;
+  return response.json(Object.assign({ id: id }, nodes[id])).status(200).end();
 });
 
 app.get("/nodes/:id/resources", (request, response) => {
@@ -103,10 +105,9 @@ app.get("/nodes/:id/outlinks", (request, response) => {
 // });
 
 app.delete("/nodes/:id", (request, response) => {
-  const id = request.params.id;
-  nodes = nodes.filter(node => node.id !== id);
-  links = links.filter(link => link.source !== id);
-  links = links.filter(link => link.target !== id);
+  delete nodes[request.params.id];
+  links = links.filter(link => link.source !== request.params.id);
+  links = links.filter(link => link.target !== request.params.id);
   return response.status(204).end();
 });
 
