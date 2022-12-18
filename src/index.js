@@ -6,110 +6,83 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+const comment = {
+  author: "SatoshiNakamoto",
+  timestamp: 1663200075902,
+  content: "content",
+  score: 0,
+  comments: []
+};
+
+/** DRINK WATER 25/9/2022 02:49:22 */
+
 let nodes = {
-  NSANode: { color: "#4285F4", comments: [] },
-  FBINode: { color: "#4285F4", comments: [] },
-  ATFNode: { color: "#4285F4", comments: [] },
-}
+  "Calculus 1": {},
+  "Calculus 2": {},
+  "Calculus 3": {},
+};
 
-// TODO: Change to kv store.
+let resources = {
+  "Calculus 1": {
+    "NSASite": { url: "https://nsa.gov", timestamp: 1663200075902, score: 6, author: "satoshi", comments: [comment] },
+    "USASite": { url: "https://usa.gov", timestamp: 1663200075902, score: 5, author: "satoshi", comments: [comment] }
+  },
+  "Calculus 2": {
+    "FBISite": { url: "https://fbi.gov", timestamp: 1663200075902, score: 4, author: "satoshi", comments: [comment] },
+    "USASite": { url: "https://usa.gov", timestamp: 1663200075902, score: 3, author: "satoshi", comments: [comment] }
+  },
+  "Calculus 3": {
+    "ATFSite": { url: "https://atf.gov", timestamp: 1663200075902, score: 2, author: "satoshi", comments: [comment] },
+    "USASite": { url: "https://usa.gov", timestamp: 1663200075902, score: 1, author: "satoshi", comments: [comment] }
+  },
+};
+
 let links = [
-  { id: uuidv4(), source: "NSANode", target: "FBINode" },
-  { id: uuidv4(), source: "FBINode", target: "ATFNode" }
+  { id: uuidv4(), source: "Calculus 1", target: "Calculus 2" },
+  { id: uuidv4(), source: "Calculus 2", target: "Calculus 3" },
 ];
 
-// TODO #2: Change resources to title-keyed kv store.
-let resources = [
-  { id: uuidv4(), node: "NSANode", title: "NSA site", url: "https://nsa.gov" },
-  { id: uuidv4(), node: "FBINode", title: "FBI site", url: "https://fbi.gov" },
-  { id: uuidv4(), node: "ATFNode", title: "ATF site", url: "https://atf.gov" }
-];
-
-app.get("/graph", (_request, response) => {
+app.get("/", (_request, response) => {
   return response.json({
-    nodes: Object.entries(nodes).map(([id, { color }]) => ({ id, color })),
+    nodes: Object.entries(nodes).map(([id, { }]) => ({ id })),
     links: links
   }).status(200).end();
 });
 
-app.get("/nodes/:id", (request, response) => {
-  const id = request.params.id;
-  return response.json(Object.assign({ id: id }, nodes[id])).status(200).end();
-});
-
 app.get("/nodes/:id/resources", (request, response) => {
-  return response.json(resources.filter(
-    (resource) => resource.node === request.params.id
+  return response.json(Object.entries(resources[request.params.id]).map(
+    ([title, { url, timestamp, score, author, comments }]) => ({ title, url, timestamp, score, author, comments })
   )).status(200).end();
 });
 
 app.get("/nodes/:id/inlinks", (request, response) => {
-  return response.json(links.filter(
-    (link) => link.target === request.params.id
-  )).status(200).end();
-})
+  return response.json(
+    links.filter(link => link.target === request.params.id)
+  ).status(200).end();
+});
 
 app.get("/nodes/:id/outlinks", (request, response) => {
-  return response.json(links.filter(
-    (link) => link.source === request.params.id
-  )).status(200).end();
-})
-
-// app.post("/nodes", (request, response) => {
-//   // Error if node already exists
-//   if (nodes.some((node) => node.title === request.body.title)) {
-//     return response.status(400).end();
-//   }
-
-//   const node = {
-//     id: uuidv4(),
-//     title: request.body.title,
-//     color: "#4285F4"
-//   };
-
-//   nodes = nodes.concat(node);
-//   return response.json(node).status(200).end();
-
-// });
-
-// // TODO: Replace with POST requests for inlinks and outlinks
-// app.post("/graph/links", (request, response) => {
-//   const newLink = {
-//     id: uuidv4(),
-//     source: request.body.source,
-//     target: request.body.target
-//   };
-
-//   // Error if link already exists (BROKEN; id will always be different)
-//   if (links.some((link) => link === newLink)) {
-//     return response.status(400).end();
-//   }
-
-//   links = links.concat(newLink);
-//   return response.json(newLink).status(200).end();
-
-// });
-
-// app.post("/nodes/:id/resources", (request, response) => {
-//   // TODO: Error if resource already exists
-//   const resource = {
-//     id: uuidv4(),
-//     nodeId: request.params.id,
-//     title: request.body.title,
-//     url: request.body.url
-//   };
-
-//   resources = resources.concat(resource);
-//   return response.json(resource).status(200).end();
-
-// });
-
-app.delete("/nodes/:id", (request, response) => {
-  delete nodes[request.params.id];
-  links = links.filter(link => link.source !== request.params.id);
-  links = links.filter(link => link.target !== request.params.id);
-  return response.status(204).end();
+  return response.json(
+    links.filter(link => link.source === request.params.id)
+  ).status(200).end();
 });
+
+app.post("/nodes/:id/resources", (request, _response) => {
+  console.log(request);
+  const title = resources[request.params.id][request.body.title];
+  const url = resources[request.params.id][request.body.url];
+  const node = nodes.filter((node) => node.id === request.params.id);
+  console.log("title", title);
+  console.log("url", url);
+  console.log("node", node);
+  /** TODO: IMPLEMENT */
+  // resources[request.params.id][request.body.title]
+  // const node = nodes.filter((node) => node.id === request.params.id);
+
+  // return response.json(
+
+  // )
+})
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
